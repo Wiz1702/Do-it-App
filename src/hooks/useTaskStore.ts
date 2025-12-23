@@ -364,6 +364,24 @@ export function useTaskStore() {
       .slice(0, 5);
   }, [tasks]);
 
+  const rescheduleTask = useCallback(async (id: string, newStart: Date, newEnd: Date) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        scheduled_start: newStart.toISOString(),
+        scheduled_end: newEnd.toISOString(),
+      })
+      .eq('id', id);
+
+    if (!error) {
+      setTasks(prev => prev.map(task => 
+        task.id === id ? { ...task, scheduledStart: newStart, scheduledEnd: newEnd } : task
+      ));
+    }
+  }, [user]);
+
   return {
     tasks,
     stats,
@@ -373,6 +391,7 @@ export function useTaskStore() {
     updateTask,
     completeTask,
     deleteTask,
+    rescheduleTask,
     getTasksByCategory,
     getTodaysTasks,
     getUpcomingTasks,

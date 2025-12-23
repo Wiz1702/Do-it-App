@@ -22,6 +22,7 @@ const Index = () => {
     loading: tasksLoading,
     addTask, 
     completeTask, 
+    rescheduleTask,
     getTodaysTasks, 
     getUpcomingTasks 
   } = useTaskStore();
@@ -72,6 +73,10 @@ const Index = () => {
     });
   };
 
+  const handleRescheduleTask = async (id: string, newStart: Date, newEnd: Date) => {
+    await rescheduleTask(id, newStart, newEnd);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header stats={stats} onSignOut={signOut} />
@@ -106,6 +111,7 @@ const Index = () => {
             <TimelineView 
               tasks={todaysTasks} 
               onCompleteTask={handleCompleteTask}
+              onRescheduleTask={handleRescheduleTask}
             />
           </div>
 
