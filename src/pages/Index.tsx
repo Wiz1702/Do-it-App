@@ -1,4 +1,7 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTaskStore } from '@/hooks/useTaskStore';
+import { useAuth } from '@/hooks/useAuth';
 import { Header } from '@/components/Header';
 import { PointsCard } from '@/components/PointsCard';
 import { QuickStats } from '@/components/QuickStats';
@@ -7,37 +10,60 @@ import { CategoryProgress } from '@/components/CategoryProgress';
 import { UpcomingTasks } from '@/components/UpcomingTasks';
 import { AddTaskDialog } from '@/components/AddTaskDialog';
 import { toast } from 'sonner';
+import { Task } from '@/types/task';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
+  const { user, loading: authLoading, signOut } = useAuth();
+  const navigate = useNavigate();
   const { 
     tasks, 
     stats, 
+    loading: tasksLoading,
     addTask, 
     completeTask, 
     getTodaysTasks, 
     getUpcomingTasks 
   } = useTaskStore();
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
+
+  if (authLoading || tasksLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   const todaysTasks = getTodaysTasks();
   const upcomingTasks = getUpcomingTasks();
 
-  const handleAddTask = (taskData: Parameters<typeof addTask>[0]) => {
-    const newTask = addTask(taskData);
-    toast.success('Task created!', {
-      description: `"${newTask.title}" has been added to your schedule.`,
-    });
+  const handleAddTask = async (taskData: Omit<Task, 'id' | 'createdAt' | 'status'>) => {
+    const newTask = await addTask(taskData);
+    if (newTask) {
+      toast.success('Task created!', {
+        description: `"${newTask.title}" has been added to your schedule.`,
+      });
+    }
   };
 
-  const handleCompleteTask = (id: string) => {
+  const handleCompleteTask = async (id: string) => {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
     
-    completeTask(id);
+    const result = await completeTask(id);
+    if (!result) return;
     
-    const isOnTime = new Date() <= task.deadline;
-    const points = isOnTime ? 
-      Math.round((task.difficulty + task.importance) * 2) : 
-      -3;
+    const { isOnTime, points } = result;
 
     toast.success(isOnTime ? '🎉 Task completed!' : 'Task completed (late)', {
       description: isOnTime 
@@ -48,7 +74,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header stats={stats} />
+      <Header stats={stats} onSignOut={signOut} />
       
       <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Hero Section */}
