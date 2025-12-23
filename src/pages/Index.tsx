@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTaskStore } from '@/hooks/useTaskStore';
 import { useAuth } from '@/hooks/useAuth';
+import { useNotifications } from '@/hooks/useNotifications';
 import { Header } from '@/components/Header';
 import { PointsCard } from '@/components/PointsCard';
 import { QuickStats } from '@/components/QuickStats';
@@ -27,11 +28,32 @@ const Index = () => {
     getUpcomingTasks 
   } = useTaskStore();
 
+  const {
+    permission,
+    settings,
+    updateSettings,
+    requestPermission,
+    isSupported,
+  } = useNotifications(tasks);
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
+
+  // Count tasks within reminder window
+  const upcomingNotificationCount = useMemo(() => {
+    const now = new Date();
+    const reminderThreshold = settings.reminderMinutes * 60 * 1000;
+    
+    return tasks.filter(task => {
+      if (task.status === 'completed') return false;
+      const deadline = new Date(task.deadline);
+      const timeUntilDeadline = deadline.getTime() - now.getTime();
+      return timeUntilDeadline > 0 && timeUntilDeadline <= reminderThreshold;
+    }).length;
+  }, [tasks, settings.reminderMinutes]);
 
   if (authLoading || tasksLoading) {
     return (
@@ -79,7 +101,18 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header stats={stats} onSignOut={signOut} />
+      <Header 
+        stats={stats} 
+        onSignOut={signOut}
+        notificationProps={{
+          permission,
+          settings,
+          onUpdateSettings: updateSettings,
+          onRequestPermission: requestPermission,
+          isSupported,
+          upcomingCount: upcomingNotificationCount,
+        }}
+      />
       
       <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Hero Section */}
