@@ -1,13 +1,13 @@
-import { Trophy, Flame, Bell, User } from 'lucide-react';
+import { Trophy, Flame, Bell, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { UserStats } from '@/types/task';
 
 interface HeaderProps {
   stats: UserStats;
+  onSignOut?: () => void;
 }
 
-export function Header({ stats }: HeaderProps) {
+export function Header({ stats, onSignOut }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-lg">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -45,9 +45,11 @@ export function Header({ stats }: HeaderProps) {
             </span>
           </Button>
 
-          <Button variant="ghost" size="icon">
-            <User className="h-5 w-5" />
-          </Button>
+          {onSignOut && (
+            <Button variant="ghost" size="icon" onClick={onSignOut} title="Sign out">
+              <LogOut className="h-5 w-5" />
+            </Button>
+          )}
         </div>
       </div>
     </header>
