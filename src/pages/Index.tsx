@@ -9,6 +9,7 @@ import { QuickStats } from '@/components/QuickStats';
 import { TimelineView } from '@/components/TimelineView';
 import { CategoryProgress } from '@/components/CategoryProgress';
 import { UpcomingTasks } from '@/components/UpcomingTasks';
+import { Leaderboard } from '@/components/Leaderboard';
 import { AddTaskDialog } from '@/components/AddTaskDialog';
 import { toast } from 'sonner';
 import { Task } from '@/types/task';
@@ -137,6 +138,7 @@ const Index = () => {
           <div className="space-y-6">
             <PointsCard stats={stats} />
             <CategoryProgress stats={stats} />
+            <Leaderboard />
           </div>
 
           {/* Center Column - Timeline */}
