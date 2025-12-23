@@ -1,14 +1,23 @@
-import { Trophy, Flame, Bell, LogOut, BarChart3 } from 'lucide-react';
+import { Trophy, Flame, LogOut, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserStats } from '@/types/task';
 import { Link } from 'react-router-dom';
+import { NotificationSettings } from './NotificationSettings';
 
 interface HeaderProps {
   stats: UserStats;
   onSignOut?: () => void;
+  notificationProps?: {
+    permission: NotificationPermission;
+    settings: { enabled: boolean; reminderMinutes: number };
+    onUpdateSettings: (settings: Partial<{ enabled: boolean; reminderMinutes: number }>) => void;
+    onRequestPermission: () => Promise<boolean>;
+    isSupported: boolean;
+    upcomingCount: number;
+  };
 }
 
-export function Header({ stats, onSignOut }: HeaderProps) {
+export function Header({ stats, onSignOut, notificationProps }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-lg">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -47,12 +56,16 @@ export function Header({ stats, onSignOut }: HeaderProps) {
             </Link>
           </Button>
 
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-danger text-[10px] font-bold text-danger-foreground flex items-center justify-center">
-              3
-            </span>
-          </Button>
+          {notificationProps && (
+            <NotificationSettings
+              permission={notificationProps.permission}
+              settings={notificationProps.settings}
+              onUpdateSettings={notificationProps.onUpdateSettings}
+              onRequestPermission={notificationProps.onRequestPermission}
+              isSupported={notificationProps.isSupported}
+              upcomingCount={notificationProps.upcomingCount}
+            />
+          )}
 
           {onSignOut && (
             <Button variant="ghost" size="icon" onClick={onSignOut} title="Sign out">
