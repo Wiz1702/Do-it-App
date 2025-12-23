@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Trophy, Medal, Award, Crown } from 'lucide-react';
@@ -19,54 +19,75 @@ export function Leaderboard() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchLeaderboard() {
-      try {
-        const { data: stats, error: statsError } = await supabase
-          .from('user_stats')
-          .select('user_id, total_points, tasks_completed, current_streak')
-          .order('total_points', { ascending: false })
-          .limit(10);
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      const { data: stats, error: statsError } = await supabase
+        .from('user_stats')
+        .select('user_id, total_points, tasks_completed, current_streak')
+        .order('total_points', { ascending: false })
+        .limit(10);
 
-        if (statsError) throw statsError;
+      if (statsError) throw statsError;
 
-        if (!stats || stats.length === 0) {
-          setEntries([]);
-          setLoading(false);
-          return;
-        }
-
-        const userIds = stats.map(s => s.user_id);
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, display_name, avatar_url')
-          .in('id', userIds);
-
-        if (profilesError) throw profilesError;
-
-        const profileMap = new Map(
-          profiles?.map(p => [p.id, { displayName: p.display_name, avatarUrl: p.avatar_url }]) || []
-        );
-
-        const leaderboardEntries: LeaderboardEntry[] = stats.map(stat => ({
-          userId: stat.user_id,
-          displayName: profileMap.get(stat.user_id)?.displayName || 'Anonymous User',
-          avatarUrl: profileMap.get(stat.user_id)?.avatarUrl || null,
-          totalPoints: stat.total_points,
-          tasksCompleted: stat.tasks_completed,
-          currentStreak: stat.current_streak,
-        }));
-
-        setEntries(leaderboardEntries);
-      } catch (error) {
-        console.error('Error fetching leaderboard:', error);
-      } finally {
+      if (!stats || stats.length === 0) {
+        setEntries([]);
         setLoading(false);
+        return;
       }
-    }
 
-    fetchLeaderboard();
+      const userIds = stats.map(s => s.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      const profileMap = new Map(
+        profiles?.map(p => [p.id, { displayName: p.display_name, avatarUrl: p.avatar_url }]) || []
+      );
+
+      const leaderboardEntries: LeaderboardEntry[] = stats.map(stat => ({
+        userId: stat.user_id,
+        displayName: profileMap.get(stat.user_id)?.displayName || 'Anonymous User',
+        avatarUrl: profileMap.get(stat.user_id)?.avatarUrl || null,
+        totalPoints: stat.total_points,
+        tasksCompleted: stat.tasks_completed,
+        currentStreak: stat.current_streak,
+      }));
+
+      setEntries(leaderboardEntries);
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchLeaderboard();
+
+    // Subscribe to realtime updates on user_stats
+    const channel = supabase
+      .channel('leaderboard-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_stats',
+        },
+        () => {
+          // Refetch leaderboard when any user_stats change
+          fetchLeaderboard();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchLeaderboard]);
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
