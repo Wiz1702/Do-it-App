@@ -11,6 +11,7 @@ import { CategoryProgress } from '@/components/CategoryProgress';
 import { UpcomingTasks } from '@/components/UpcomingTasks';
 import { Leaderboard } from '@/components/Leaderboard';
 import { AddTaskDialog } from '@/components/AddTaskDialog';
+import { ProductivityCoachChat } from '@/components/ProductivityCoachChat';
 import { toast } from 'sonner';
 import { Task } from '@/types/task';
 import { Loader2 } from 'lucide-react';
@@ -159,6 +160,10 @@ const Index = () => {
           </div>
         </div>
       </main>
+
+      <div className="container mx-auto px-4 pb-10">
+        <ProductivityCoachChat tasks={tasks} stats={stats} onAddTask={handleAddTask} />
+      </div>
     </div>
   );
 };
