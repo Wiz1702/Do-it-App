@@ -12,6 +12,13 @@ const badgeVariants = cva(
         secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
+        academic: "border-transparent bg-chart-academic/20 text-chart-academic",
+        professional: "border-transparent bg-chart-professional/20 text-chart-professional",
+        personal: "border-transparent bg-chart-personal/20 text-chart-personal",
+        success: "border-transparent bg-success/20 text-success",
+        warning: "border-transparent bg-warning/20 text-warning",
+        danger: "border-transparent bg-danger/20 text-danger",
+        points: "border-transparent gradient-gold text-accent-foreground shadow-sm",
       },
     },
     defaultVariants: {
